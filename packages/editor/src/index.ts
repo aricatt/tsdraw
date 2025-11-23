@@ -18,5 +18,5 @@ export * from './lib/utils/geometry'
 // 导出 @tldraw/state 和 @tldraw/store（MIT 许可）
 export { atom, computed, react, transact } from '@tldraw/state'
 export type { Atom, Computed } from '@tldraw/state'
-export { Store } from '@tldraw/store'
+export { Store, RecordType, StoreSchema } from '@tldraw/store'
 export type { RecordId } from '@tldraw/store'

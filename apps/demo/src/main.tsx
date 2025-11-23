@@ -1,7 +1,32 @@
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom/client'
-import { Editor, createDefaultShapeUtils, Store } from '@tsdraw/editor'
+import { Editor, createDefaultShapeUtils, Store, StoreSchema } from '@tsdraw/editor'
 import './index.css'
+
+// 定义 Schema
+// 尝试直接使用对象定义，不使用 RecordType 类
+const schema = StoreSchema.create({
+    shape: {
+        typeName: 'shape',
+        createId: (id: any) => id,
+        validate: (record: any) => record,
+    },
+    page: {
+        typeName: 'page',
+        createId: (id: any) => id,
+        validate: (record: any) => record,
+    },
+    camera: {
+        typeName: 'camera',
+        createId: (id: any) => id,
+        validate: (record: any) => record,
+    },
+    instance: {
+        typeName: 'instance',
+        createId: (id: any) => id,
+        validate: (record: any) => record,
+    },
+})
 
 // 第一步：测试 Editor 初始化
 function TestEditor() {
@@ -11,7 +36,7 @@ function TestEditor() {
     useEffect(() => {
         try {
             setStatus('Creating Store...')
-            const store = new Store({ schema: {} } as any)
+            const store = new Store({ schema })
 
             setStatus('Creating Editor...')
             const newEditor = new Editor({ store, autoFocus: true })

@@ -6,7 +6,7 @@
 export * from './lib/types/base-types'
 
 // 导出核心类
-export { Editor } from './lib/editor/Editor'
+export { Editor, createDefaultSchema } from './lib/editor/Editor'
 export type { EditorOptions } from './lib/editor/Editor'
 
 // 导出 Shape 系统

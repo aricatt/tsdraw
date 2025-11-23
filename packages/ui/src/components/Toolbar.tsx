@@ -4,7 +4,7 @@
 
 import React from 'react'
 import { Editor } from '@tsdraw/editor'
-import { useAtomValue } from '@tldraw/state-react'
+import { useAtomValue } from '../hooks/useAtomValue'
 import './Toolbar.css'
 
 export interface ToolbarProps {
@@ -12,7 +12,7 @@ export interface ToolbarProps {
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
-    const currentTool = useAtomValue(editor.currentToolIdAtom)
+    const currentToolId = useAtomValue(editor.currentToolIdAtom)
     const camera = useAtomValue(editor.cameraAtom)
 
     const tools = [
@@ -31,7 +31,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
                 {tools.map(tool => (
                     <button
                         key={tool.id}
-                        className={`toolbar-button ${currentTool === tool.id ? 'active' : ''}`}
+                        className={`toolbar-button ${currentToolId === tool.id ? 'active' : ''}`}
                         onClick={() => editor.setCurrentTool(tool.id)}
                         title={tool.label}
                     >

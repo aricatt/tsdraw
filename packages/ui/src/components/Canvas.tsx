@@ -9,7 +9,7 @@
  */
 
 import React, { useRef, useEffect } from 'react'
-import { useAtomValue } from '@tldraw/state-react'
+import { useAtomValue } from '../hooks/useAtomValue'
 import { Editor, Shape, ShapeUtilRegistry } from '@tsdraw/editor'
 import { ShapeRenderer } from './ShapeRenderer'
 import { SelectionBox } from './SelectionBox'
@@ -60,7 +60,7 @@ export const Canvas: React.FC<CanvasProps> = ({
     const camera = useAtomValue(editor.cameraAtom)
 
     // 计算 SVG 变换
-    const transform = `translate(${camera.x}px, ${camera.y}px) scale(${camera.z})`
+    const transform = `translate(${camera.x}, ${camera.y}) scale(${camera.z})`
 
     // 处理鼠标事件
     const handlePointerDown = (e: React.PointerEvent) => {

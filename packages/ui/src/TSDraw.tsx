@@ -8,7 +8,7 @@
  */
 
 import React, { useEffect, useState } from 'react'
-import { Editor, createDefaultShapeUtils, ShapeUtilRegistry } from '@tsdraw/editor'
+import { Editor, createDefaultShapeUtils, ShapeUtilRegistry, createDefaultSchema } from '@tsdraw/editor'
 import { Store } from '@tldraw/store'
 import { Canvas } from './components/Canvas'
 import { Toolbar } from './components/Toolbar'
@@ -63,10 +63,10 @@ export const TSDraw: React.FC<TSDrawProps> = ({
 
     // 初始化编辑器
     useEffect(() => {
-        // 创建 Store（暂时使用空配置）
+        // 创建 Store
         const store = new Store({
-            schema: {},
-        } as any)
+            schema: createDefaultSchema(),
+        })
 
         // 创建 Editor
         const newEditor = new Editor({

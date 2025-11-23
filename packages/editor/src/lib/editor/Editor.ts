@@ -9,7 +9,7 @@
  * 4. 使用 @tldraw/state 实现响应式
  */
 
-import { Store } from '@tldraw/store'
+import { Store, StoreSchema } from '@tldraw/store'
 import { atom, computed, Atom, Computed } from '@tldraw/state'
 import {
     Shape,
@@ -31,6 +31,34 @@ import {
 // ============================================================================
 // Editor 配置
 // ============================================================================
+
+/**
+ * 创建默认的 Store Schema
+ */
+export function createDefaultSchema() {
+    return StoreSchema.create({
+        shape: {
+            typeName: 'shape',
+            createId: (id: any) => id,
+            validate: (record: any) => record,
+        },
+        page: {
+            typeName: 'page',
+            createId: (id: any) => id,
+            validate: (record: any) => record,
+        },
+        camera: {
+            typeName: 'camera',
+            createId: (id: any) => id,
+            validate: (record: any) => record,
+        },
+        instance: {
+            typeName: 'instance',
+            createId: (id: any) => id,
+            validate: (record: any) => record,
+        },
+    })
+}
 
 export interface EditorOptions {
     /** 数据存储 */

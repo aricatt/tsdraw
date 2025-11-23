@@ -1,0 +1,21 @@
+{
+    "name": "tsdraw",
+    "version": "0.1.0",
+    "private": true,
+    "description": "A children-friendly infinite canvas with AI capabilities, inspired by tldraw",
+    "scripts": {
+        "dev": "cd apps/demo && npm run dev",
+        "build": "echo 'Build not configured yet'",
+        "test": "echo 'Tests not configured yet'",
+        "lint": "echo 'Lint not configured yet'",
+        "clean": "rm -rf node_modules packages/*/node_modules apps/*/node_modules"
+    },
+    "devDependencies": {
+        "typescript": "^5.4.0",
+        "@types/node": "^20.0.0"
+    },
+    "engines": {
+        "node": ">=18.0.0",
+        "npm": ">=9.0.0"
+    }
+}

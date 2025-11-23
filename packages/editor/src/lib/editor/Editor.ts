@@ -353,6 +353,13 @@ export class Editor {
     }
 
     /**
+     * 取消所有选择
+     */
+    deselectAllShapes(): void {
+        this._selectedShapeIds.set(new Set())
+    }
+
+    /**
      * 选择所有图形
      */
     selectAll(): void {
@@ -560,6 +567,12 @@ export class Editor {
                 align: 'left',
                 autoSize: true,
             },
+            draw: {
+                points: [],
+                color: '#1e1e1e',
+                size: 2,
+                isClosed: false,
+            },
         }
 
         return { ...defaults[type], ...props }
@@ -571,6 +584,168 @@ export class Editor {
     private getShapesBounds(shapes: Shape[]): Box {
         // TODO: 实现边界计算
         return { x: 0, y: 0, width: 0, height: 0 }
+    }
+
+    // ========================================================================
+    // 交互逻辑
+    // ========================================================================
+
+    private pointerState = {
+        isDown: false,
+        startX: 0,
+        startY: 0,
+        lastX: 0,
+        lastY: 0,
+        startCamera: { x: 0, y: 0, z: 1 },
+    }
+
+    /**
+     * 屏幕坐标转画布坐标
+     */
+    screenToCanvas(point: Point): Point {
+        const camera = this.camera
+        return {
+            x: (point.x - camera.x) / camera.z,
+            y: (point.y - camera.y) / camera.z,
+        }
+    }
+
+    pointerDown(point: Point): void {
+        this.pointerState = {
+            isDown: true,
+            startX: point.x,
+            startY: point.y,
+            lastX: point.x,
+            lastY: point.y,
+            startCamera: { ...this.camera },
+        }
+
+        const toolId = this._currentToolId.get()
+        const canvasPoint = this.screenToCanvas(point)
+
+        if (toolId === 'select') {
+            // 简单的点击测试
+            const shapes = this.getShapesInPage(this.currentPageId).reverse()
+            let hitShapeId: ShapeId | null = null
+
+            for (const shape of shapes) {
+                // 简单的矩形碰撞检测
+                // 注意：这里假设所有图形都有 width/height，实际上应该用 ShapeUtil
+                const width = (shape.props as any).width || 100
+                const height = (shape.props as any).height || 100 // 默认值，针对 text/circle 等
+
+                // 对于 circle，props 可能有 radius
+                let w = width
+                let h = height
+                if ((shape.props as any).radius) {
+                    w = (shape.props as any).radius * 2
+                    h = (shape.props as any).radius * 2
+                }
+
+                if (
+                    canvasPoint.x >= shape.x &&
+                    canvasPoint.x <= shape.x + w &&
+                    canvasPoint.y >= shape.y &&
+                    canvasPoint.y <= shape.y + h
+                ) {
+                    hitShapeId = shape.id
+                    break
+                }
+            }
+
+            if (hitShapeId) {
+                this.selectShape(hitShapeId)
+            } else {
+                this.deselectAllShapes()
+            }
+        } else if (toolId === 'hand') {
+            // 平移工具
+        } else {
+            // 创建图形（简化：点击创建）
+            // 实际上应该在 drag 中创建，这里先简单实现点击创建
+            let props: any = {}
+
+            if (toolId === 'text') {
+                props = { text: 'Hello' }
+            } else if (toolId === 'draw') {
+                props = {
+                    points: [{ x: 0, y: 0 }],
+                    isClosed: false
+                }
+            }
+
+            const shape = this.createShape(
+                toolId as any,
+                props,
+                {
+                    x: canvasPoint.x - (toolId === 'draw' ? 0 : 50),
+                    y: canvasPoint.y - (toolId === 'draw' ? 0 : 50),
+                }
+            )
+
+            // 创建后选中并切换回选择工具
+            this.selectShape(shape.id)
+            this.setCurrentTool('select')
+        }
+    }
+
+    pointerMove(point: Point): void {
+        if (!this.pointerState.isDown) return
+
+        const dx = point.x - this.pointerState.lastX
+        const dy = point.y - this.pointerState.lastY
+        this.pointerState.lastX = point.x
+        this.pointerState.lastY = point.y
+
+        const toolId = this._currentToolId.get()
+
+        // 平移画布：使用手形工具，或者按住空格（这里简化为只看工具），或者在空白处拖动（未选中任何图形）
+        if (toolId === 'hand' || (toolId === 'select' && this.selectedShapeIds.size === 0)) {
+            const camera = this._camera.get()
+            this._camera.set({
+                ...camera,
+                x: camera.x + dx,
+                y: camera.y + dy,
+            })
+        } else if (toolId === 'select' && this.selectedShapeIds.size > 0) {
+            // 移动选中的图形
+            const camera = this._camera.get()
+            const deltaX = dx / camera.z
+            const deltaY = dy / camera.z
+
+            const selectedIds = this.selectedShapeIds
+            const shapesMap = this._shapes.get()
+            const updates: Shape[] = []
+
+            selectedIds.forEach(id => {
+                const shape = shapesMap.get(id)
+                if (shape) {
+                    updates.push({
+                        ...shape,
+                        x: shape.x + deltaX,
+                        y: shape.y + deltaY,
+                    })
+                }
+            })
+
+            if (updates.length > 0) {
+                // 更新内部状态
+                const newShapesMap = new Map(shapesMap)
+                updates.forEach(shape => newShapesMap.set(shape.id, shape))
+                this._shapes.set(newShapesMap)
+
+                // 更新 store
+                try {
+                    this.store.put(updates)
+                } catch (e) {
+                    console.warn(e)
+                }
+            }
+        }
+    }
+
+    pointerUp(point: Point): void {
+        this.pointerState.isDown = false
     }
 
     // ========================================================================

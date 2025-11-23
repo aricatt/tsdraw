@@ -53,6 +53,7 @@ export const Canvas: React.FC<CanvasProps> = ({
     className,
 }) => {
     const svgRef = useRef<SVGSVGElement>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
 
     // 订阅响应式状态
     const shapes = useAtomValue(editor.currentPageShapes)
@@ -64,73 +65,66 @@ export const Canvas: React.FC<CanvasProps> = ({
 
     // 处理鼠标事件
     const handlePointerDown = (e: React.PointerEvent) => {
-        const svg = svgRef.current
-        if (!svg) return
-
-        // 获取 SVG 坐标
-        const point = getSVGPoint(svg, e.clientX, e.clientY, camera)
-
-        // 检查是否点击了图形
-        const hitShape = findShapeAtPoint(shapes, point, shapeUtils)
-
-        if (hitShape) {
-            // 点击了图形
-            if (e.shiftKey) {
-                // Shift + 点击 = 添加到选择
-                editor.addToSelection(hitShape.id)
-            } else if (!selectedIds.has(hitShape.id)) {
-                // 选择新图形
-                editor.selectShape(hitShape.id)
-            }
-        } else {
-            // 点击了空白区域
-            if (!e.shiftKey) {
-                editor.clearSelection()
-            }
-            // TODO: 开始框选
-        }
+        e.currentTarget.setPointerCapture(e.pointerId)
+        editor.pointerDown({ x: e.clientX, y: e.clientY, z: 0 })
     }
 
     const handlePointerMove = (e: React.PointerEvent) => {
-        // TODO: 处理拖拽
+        editor.pointerMove({ x: e.clientX, y: e.clientY, z: 0 })
     }
 
     const handlePointerUp = (e: React.PointerEvent) => {
-        // TODO: 结束拖拽
+        e.currentTarget.releasePointerCapture(e.pointerId)
+        editor.pointerUp({ x: e.clientX, y: e.clientY, z: 0 })
     }
 
-    const handleWheel = (e: React.WheelEvent) => {
-        e.preventDefault()
+    // 处理滚轮事件（缩放和平移）
+    useEffect(() => {
+        const container = containerRef.current
+        if (!container) return
 
-        // 缩放
-        if (e.ctrlKey || e.metaKey) {
-            const delta = -e.deltaY * 0.01
-            const newZoom = Math.max(0.1, Math.min(8, camera.z * (1 + delta)))
+        const handleWheel = (e: WheelEvent) => {
+            e.preventDefault()
 
-            editor.setCamera(camera.x, camera.y, newZoom)
-        } else {
-            // 平移
-            editor.setCamera(
-                camera.x - e.deltaX,
-                camera.y - e.deltaY,
-                camera.z
-            )
+            // 获取最新的 camera 状态
+            const currentCamera = editor.camera
+
+            if (e.ctrlKey || e.metaKey) {
+                // 缩放
+                const delta = -e.deltaY * 0.01
+                const newZoom = Math.max(0.1, Math.min(8, currentCamera.z * (1 + delta)))
+                editor.setCamera(currentCamera.x, currentCamera.y, newZoom)
+            } else {
+                // 平移
+                editor.setCamera(
+                    currentCamera.x - e.deltaX,
+                    currentCamera.y - e.deltaY,
+                    currentCamera.z
+                )
+            }
         }
-    }
+
+        container.addEventListener('wheel', handleWheel, { passive: false })
+
+        return () => {
+            container.removeEventListener('wheel', handleWheel)
+        }
+    }, [editor])
 
     return (
         <div
+            ref={containerRef}
             className={`tsdraw-canvas ${className || ''}`}
             style={{ width, height }}
+            onPointerMove={handlePointerMove} // Moved onPointerMove here
         >
             <svg
                 ref={svgRef}
                 width={width}
                 height={height}
                 onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
-                onWheel={handleWheel}
+                onPointerLeave={handlePointerUp}
                 style={{ cursor: 'default' }}
             >
                 {/* 背景 */}
